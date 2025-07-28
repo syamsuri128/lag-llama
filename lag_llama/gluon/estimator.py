@@ -141,7 +141,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         window_warp_prob: float = 0.0,
         window_warp_window_ratio: float = 0.1,
         window_warp_scales: list = [0.5, 2.0],
-        # Continuning model arguments
+        # Continuing model arguments
         distr_output: str = "studentT",
         loss: DistributionLoss = NegativeLogLikelihood(),
         num_parallel_samples: int = 100,
@@ -153,6 +153,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         time_feat: bool = False,
         dropout: float = 0.0,
         lags_seq: list = ["Q", "M", "W", "D", "H", "T", "S"],
+        # lags_seq: list = ["QE", "ME", "W", "D", "h", "min", "s"],
         data_id_to_name_map: dict = {},
         use_cosine_annealing_lr: bool = False,
         cosine_annealing_lr_args: dict = {},
@@ -173,17 +174,30 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         self.context_length = context_length
         self.max_context_length = max_context_length
 
-        lag_indices = []
-        for freq in lags_seq:
-            lag_indices.extend(
-                get_lags_for_frequency(freq_str=freq, num_default_lags=1)
-            )
+        # Cek apakah lags_seq diisi dengan integer atau string
+        if lags_seq and isinstance(lags_seq[0], int):
+            # KASUS 1: Input adalah list integer [1, 7, 30]
+            # Anggap user sudah memberikan lag yang benar (berbasis-1)
+            # Kita hanya perlu mengurutkan, memastikan unik, dan melakukan transformasi -1
+            # print("Detected integer lags. Processing directly.")
+            unique_lags = sorted(set(lags_seq))
+            # Lakukan transformasi -1 seperti logika asli
+            self.lags_seq = [lag - 1 for lag in unique_lags]
 
-        if len(lag_indices):
-            self.lags_seq = sorted(set(lag_indices))
-            self.lags_seq = [lag_index - 1 for lag_index in self.lags_seq]
         else:
-            self.lags_seq = []
+            # KASUS 2: Input adalah list string (logika asli)
+            # print("Detected frequency strings. Using get_lags_for_frequency.")
+            lag_indices = []
+            for freq in lags_seq:
+                lag_indices.extend(
+                    get_lags_for_frequency(freq_str=freq, num_default_lags=1)
+                )
+            
+            if len(lag_indices):
+                self.lags_seq = sorted(set(lag_indices))
+                self.lags_seq = [lag_index - 1 for lag_index in self.lags_seq]
+            else:
+                self.lags_seq = []
 
         self.n_head = n_head
         self.n_layer = n_layer
