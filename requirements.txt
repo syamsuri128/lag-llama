@@ -8,7 +8,7 @@ gluonts[torch]<=0.14.4
 numpy<2.1.0
 wandb
 scipy
-pandas==2.2.0
+pandas<=2.2.0
 huggingface_hub[cli]
 matplotlib
 jax>=0.5.1
