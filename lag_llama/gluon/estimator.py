@@ -177,11 +177,10 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         # Validasi dan transformasi lags_seq
         if lags_seq:
             if isinstance(lags_seq[0], int):
-                # KASUS 1: Input adalah list integer [1, 7, 30]
-                # Asumsikan input berbasis-1, tapi hindari nilai <= 0
-                valid_lags = [lag for lag in lags_seq if lag > 0]
-                unique_lags = sorted(set(valid_lags))
-                self.lags_seq = [lag - 1 for lag in unique_lags]
+                # KASUS 1: Input adalah list integer [0, 7, 30]
+                # Asumsikan input sudah berbasis-0, tidak perlu transformasi
+                unique_lags = sorted(set(lags_seq))
+                self.lags_seq = unique_lags
         
             elif isinstance(lags_seq[0], str):
                 # KASUS 2: Input adalah list string seperti ['D', 'W', 'M']
@@ -192,9 +191,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
                     )
         
                 if lag_indices:
-                    # Hindari nilai <= 0 sebelum transformasi
-                    valid_lag_indices = [lag for lag in lag_indices if lag > 0]
-                    self.lags_seq = sorted(set([lag - 1 for lag in valid_lag_indices]))
+                    self.lags_seq = sorted(set([lag - 1 for lag in lag_indices]))
                 else:
                     self.lags_seq = []
         
