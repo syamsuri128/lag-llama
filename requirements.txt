@@ -1,7 +1,11 @@
-torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu118
+--extra-index-url https://download.pytorch.org/whl/cu118
+
+torch==2.5.1
+torchvision==0.20.1
+torchaudio==2.5.1
+
 gluonts[torch]<=0.14.4
 numpy<2.1.0
-torch>=2.0.0
 wandb
 scipy
 pandas==2.2.0
