@@ -174,30 +174,34 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         self.context_length = context_length
         self.max_context_length = max_context_length
 
-        # Cek apakah lags_seq diisi dengan integer atau string
-        if lags_seq and isinstance(lags_seq[0], int):
-            # KASUS 1: Input adalah list integer [1, 7, 30]
-            # Anggap user sudah memberikan lag yang benar (berbasis-1)
-            # Kita hanya perlu mengurutkan, memastikan unik, dan melakukan transformasi -1
-            # print("Detected integer lags. Processing directly.")
-            unique_lags = sorted(set(lags_seq))
-            # Lakukan transformasi -1 seperti logika asli
-            self.lags_seq = [lag - 1 for lag in unique_lags]
-
-        else:
-            # KASUS 2: Input adalah list string (logika asli)
-            # print("Detected frequency strings. Using get_lags_for_frequency.")
-            lag_indices = []
-            for freq in lags_seq:
-                lag_indices.extend(
-                    get_lags_for_frequency(freq_str=freq, num_default_lags=1)
-                )
-            
-            if len(lag_indices):
-                self.lags_seq = sorted(set(lag_indices))
-                self.lags_seq = [lag_index - 1 for lag_index in self.lags_seq]
+        # Validasi dan transformasi lags_seq
+        if lags_seq:
+            if isinstance(lags_seq[0], int):
+                # KASUS 1: Input adalah list integer [1, 7, 30]
+                # Asumsikan input berbasis-1, tapi hindari nilai <= 0
+                valid_lags = [lag for lag in lags_seq if lag > 0]
+                unique_lags = sorted(set(valid_lags))
+                self.lags_seq = [lag - 1 for lag in unique_lags]
+        
+            elif isinstance(lags_seq[0], str):
+                # KASUS 2: Input adalah list string seperti ['D', 'W', 'M']
+                lag_indices = []
+                for freq in lags_seq:
+                    lag_indices.extend(
+                        get_lags_for_frequency(freq_str=freq, num_default_lags=1)
+                    )
+        
+                if lag_indices:
+                    # Hindari nilai <= 0 sebelum transformasi
+                    valid_lag_indices = [lag for lag in lag_indices if lag > 0]
+                    self.lags_seq = sorted(set([lag - 1 for lag in valid_lag_indices]))
+                else:
+                    self.lags_seq = []
+        
             else:
-                self.lags_seq = []
+                raise ValueError("lags_seq harus berupa list of int atau list of str.")
+        else:
+            self.lags_seq = []
 
         self.n_head = n_head
         self.n_layer = n_layer
